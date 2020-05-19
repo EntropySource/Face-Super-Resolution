@@ -7,7 +7,7 @@ from data_loader import create_dataloader
 from glob import glob
 from models.SRGAN_model import SRGANModel
 import torch
-
+from absl import app
 
 def main():
     #### options
@@ -58,7 +58,7 @@ def main():
     parser.add_argument('--D_nf', type=int, default=32)
 
     # data dir
-    parser.add_argument('--hr_path', type=list, default=['data/celebahq-512/', 'data/ffhq-512/'])
+    parser.add_argument('--hr_path', type=list, default=['./testimages/hr'])
     parser.add_argument('--lr_path', type=str, default='data/lr-128/')
     parser.add_argument('--checkpoint_dir', type=str, default='check_points/ESRGAN-V1/')
     parser.add_argument('--val_dir', type=str, default='dev_show')

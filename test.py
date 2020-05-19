@@ -61,27 +61,34 @@ def get_FaceSR_opt():
     parser.add_argument('--pretrain_model_G', type=str, default='90000_G.pth')
     parser.add_argument('--pretrain_model_D', type=str, default=None)
 
+    parser.add_argument('--image', type=str, default=None)
     args = parser.parse_args()
 
     return args
 
 
-sr_model = SRGANModel(get_FaceSR_opt(), is_train=False)
-sr_model.load()
 
-def sr_forward(img, padding=0.5, moving=0.1):
-    img_aligned, M = dlib_detect_face(img, padding=padding, image_size=(128, 128), moving=moving)
-    input_img = torch.unsqueeze(_transform(Image.fromarray(img_aligned)), 0)
-    sr_model.var_L = input_img.to(sr_model.device)
-    sr_model.test()
-    output_img = sr_model.fake_H.squeeze(0).cpu().numpy()
-    output_img = np.clip((np.transpose(output_img, (1, 2, 0)) / 2.0 + 0.5) * 255.0, 0, 255).astype(np.uint8)
-    rec_img = face_recover(output_img, M * 4, img)
-    return output_img, rec_img
+def main():
+    import sys
+    args = get_FaceSR_opt()
+    img_path = args.image
+    img = utils.read_cv2_img(img_path)
+    sr_model = SRGANModel(args, is_train=False)
+    sr_model.load()
 
-img_path = 'input.jpg'
-img = utils.read_cv2_img(img_path)
-output_img, rec_img = sr_forward(img)
-utils.save_image(output_img, 'output_face.jpg')
-utils.save_image(rec_img, 'output_img.jpg')
+    def sr_forward(img, padding=0.5, moving=0.1):
+        img_aligned, M = dlib_detect_face(img, padding=padding, image_size=(128, 128), moving=moving)
+        input_img = torch.unsqueeze(_transform(Image.fromarray(img_aligned)), 0)
+        sr_model.var_L = input_img.to(sr_model.device)
+        sr_model.test()
+        output_img = sr_model.fake_H.squeeze(0).cpu().numpy()
+        output_img = np.clip((np.transpose(output_img, (1, 2, 0)) / 2.0 + 0.5) * 255.0, 0, 255).astype(np.uint8)
+        rec_img = face_recover(output_img, M * 4, img)
+        return output_img, rec_img
 
+    output_img, rec_img = sr_forward(img)
+    utils.save_image(output_img, 'output_face.jpg')
+    utils.save_image(rec_img, 'output_img.jpg')
+
+if __name__ == '__main__':
+    main()
